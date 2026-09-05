@@ -27,3 +27,85 @@ below depends on.
 | 7, 8 | 48.5 | 40 |
 
 with $W = 244$, $H = 122$, all in centimetres.
+
+## 2. Exact integer scaling
+
+### 2.1 Why coordinates must be exact
+
+The search decides where a part goes by testing whether two
+coordinates coincide, for instance whether one part starts exactly
+where another ends:
+
+$$x_i + w_i = x_j$$
+
+If such a test is wrong even once, a valid position is discarded and
+the search may report *infeasible* for an instance that is in fact
+feasible. The proof of optimality would then be worthless.
+
+Floating-point arithmetic cannot guarantee these tests. A `float`
+represents only rationals of the form
+
+$$\frac{p}{2^k}, \qquad p, k \in \mathbb{Z}$$
+
+so a value is stored exactly **iff** its denominator in lowest terms
+is a power of two. $48.5 = \tfrac{97}{2}$ qualifies; $33.3 =
+\tfrac{333}{10}$ does not, because $10 = 2 \cdot 5$ carries a factor
+of $5$. Stored approximately, it accumulates error: three such parts
+stacked give $99.89999\ldots$ instead of $99.9$, and the equality
+test above fails.
+
+### 2.2 The scaling
+
+All part dimensions are rationals, since any measurement written with
+finitely many decimals is one. A finite set of rationals always
+admits a common denominator, so the instance can be rewritten in
+integers.
+
+Let $\mathcal{D} = \{w_i, h_i\}_{i=1}^{n} \cup \{W, H\}$ be the set
+of all dimensions, and let $\lambda$ be the least common multiple of
+their denominators in lowest terms. The scaled instance is
+
+$$\tilde{w}_i = \lambda w_i, \quad \tilde{h}_i = \lambda h_i,
+\quad \tilde{W} = \lambda W, \quad \tilde{H} = \lambda H$$
+
+which is by construction free of decimals.
+
+### 2.3 Why this changes nothing
+
+Multiplying every length by the same factor is a change of units, not
+a change of problem — the same figure measured in half-centimetres
+instead of centimetres. Distances, and therefore which parts overlap
+and which fit, are unaffected.
+
+Formally, the map $s(x) = \lambda x$ sends any feasible layout of
+$(P, B)$ to a feasible layout of $(\tilde{P}, \tilde{B})$, and
+$s^{-1}(x) = x / \lambda$ sends it back. The correspondence is
+one-to-one in both directions, so
+
+$$(P, B) \text{ is feasible} \iff (\tilde{P}, \tilde{B})
+\text{ is feasible}$$
+
+No solution is gained and none is lost. The solver may therefore work
+entirely in $\mathbb{Z}$ and divide by $\lambda$ only when reporting
+results.
+
+### 2.4 Why not exact rational arithmetic throughout
+
+Python's `Fraction` is exact for every rational, so it would also be
+correct. It is avoided for speed: each operation requires finding a
+common denominator and reducing by a `gcd`, which is orders of
+magnitude slower than integer arithmetic. The search performs
+millions of coordinate comparisons, so `Fraction` is used exactly
+once — to read the decimals without error and compute $\lambda$ —
+after which everything is integer.
+
+### 2.5 Reference instance
+
+$\mathcal{D}$ contains $48.5$ and $67.5$, of denominator $2$; all
+other values are integers. Hence $\lambda = 2$ and the board becomes
+$488 \times 244$ in half-centimetres.
+
+Note that for this particular instance every denominator is already a
+power of two, so `float` would happen to be exact. The scaling is not
+a fix for these numbers but a guarantee that correctness does not
+depend on which numbers are supplied.
