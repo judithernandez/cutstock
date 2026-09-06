@@ -299,6 +299,16 @@ which is what separates a bound from a heuristic. A heuristic also
 shrinks the tree, but may discard the solution along with it, and
 then an exhausted tree no longer proves anything.
 
+On the reference instance the pruning test never fires: the parts
+total $26{,}432.5$ cm² against a board area of $29{,}768$ cm², so area
+is never the binding constraint and every branch dies for geometric
+reasons instead. The search explores 226 nodes with or without it.
+
+This is consistent with the observation of section 1: area is a weak
+bound for this instance. The test is retained because it is cheap and
+because instances that are tight on area — the common case once part
+counts grow — benefit substantially from it.
+
 ### 5.3 What the search establishes
 
 The search returns one of two things, and both are certificates.
