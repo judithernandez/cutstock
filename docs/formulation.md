@@ -244,6 +244,101 @@ Not every candidate is feasible — most will fail containment or
 overlap — but the set is guaranteed to contain a valid position
 whenever one exists.
 
+## 5. Search
+
+### 5.1 Backtracking
+
+Parts are placed one at a time, in a fixed order. For the next
+unplaced part the search tries every candidate position of section 4
+in both orientations. A position is taken when it satisfies both
+containment and non-overlap; the search then continues with the
+following part. When no position works, the last placement is undone
+and the search resumes from the next untried candidate.
+
+```
+place(i):
+    if i == n:                      -> all parts placed, success
+    for each (x, y) in candidates(S):
+        for each orientation:
+            if fits and does not overlap:
+                place part i there
+                if place(i+1) succeeds: success
+                remove part i        <- backtracking
+    -> failure
+```
+
+The recursion is what makes this concise: `place(i)` means *place
+part $i$ and every part after it*, so a single call resolves the
+whole remainder of the problem. The base case `i == n` is what
+terminates it.
+
+The order in which parts are tried does not affect correctness, only
+speed. Placing large parts first is the usual choice: they are the
+most constrained, so branches that cannot work fail earlier, when the
+subtree below them is still small.
+
+### 5.2 Area pruning
+
+A branch can often be discarded before exploring it. Let $S$ be the
+set of parts already placed. If the area still to be placed exceeds
+the free area of the board,
+
+$$\sum_{i \notin S} w_i h_i \;>\; W H - \sum_{p \in S} w'_p h'_p$$
+
+then no completion of this branch can exist and the search returns
+immediately.
+
+This is the area bound of section 1 applied at every node rather than
+once at the root. It costs one sum and one comparison, against an
+entire subtree avoided.
+
+Crucially the test is **safe**: it discards only branches that
+provably admit no solution, so it never removes a valid layout. A
+pruned search explores fewer nodes but reaches the same conclusions,
+which is what separates a bound from a heuristic. A heuristic also
+shrinks the tree, but may discard the solution along with it, and
+then an exhausted tree no longer proves anything.
+
+### 5.3 What the search establishes
+
+The search returns one of two things, and both are certificates.
+
+If it finds a layout, that layout **is** the proof that $k$ boards
+suffice: it can be checked independently, without trusting the
+solver.
+
+If it exhausts the tree, no layout exists. This follows from
+normalization being complete (4.1) and pruning being safe (5.2): the
+search examined a set of layouts guaranteed to contain a solution if
+one existed, and found none.
+
+Together these give optimality. A layout on $k$ boards is an upper
+bound, an exhausted search on $k-1$ boards a lower bound, and when
+the two meet the minimum is established. No heuristic can produce the
+second half.
+
+### 5.4 Complexity
+
+Two-dimensional packing is **NP-hard**. The term classifies how the
+cost of solving a problem grows with its size. For some problems that
+growth is mild: sorting a thousand numbers costs only a little more
+than sorting a hundred. For others, adding a single element can
+multiply the work, because it interacts with every choice already
+made — the case here, where each new part must be checked against
+every pair of alternatives already committed to. NP-hard problems are
+the hardest members of that second group, in the precise sense that
+an efficient method for any one of them would yield an efficient
+method for all. None is known, and it is widely believed none exists,
+though this remains a conjecture rather than a theorem.
+
+The practical consequence is not that the problem is unsolvable, but
+that no algorithm can be expected to scale to large instances. An
+exact solver is worth building for small ones, where it returns a
+proof rather than an estimate, and where pruning matters more than
+raw speed.
+
+The reference instance is resolved in 226 nodes.
+
 ## Implementation map
 
 | Section | Module | Function |
