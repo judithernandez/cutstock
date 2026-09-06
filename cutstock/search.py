@@ -32,6 +32,11 @@ def search(parts, W, H):
         # base case: no parts left to place
         if i == len(parts):
             return True
+        
+        # area pruning: docs/formulation.md, section 5.2
+        free = W * H - sum(w * h for _, _, w, h in placed)
+        if sum(w * h for w, h in parts[i:]) > free:
+            return False
 
         w0, h0 = parts[i]
 
