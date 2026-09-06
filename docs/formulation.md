@@ -15,7 +15,7 @@ than the pair $(W, H)$. This fixes the origin at the lower-left
 corner and orients both axes, which every inequality in the sections
 below depends on.
 
-### Reference instance
+### 1.1 Reference instance
 
 | $i$ | $w_i$ | $h_i$ |
 |-----|-------|-------|
@@ -27,6 +27,16 @@ below depends on.
 | 7, 8 | 48.5 | 40 |
 
 with $W = 244$, $H = 122$, all in centimetres.
+
+### 1.2 Convention
+
+The origin $(0, 0)$ is the lower-left corner of the board, with $x$
+increasing rightwards and $y$ upwards. Every position in this
+document and in the code follows this convention.
+
+Rendering targets such as SVG use a downward $y$ axis, so the
+conversion belongs in the drawing layer alone and never appears in
+the model or the search.
 
 ## 2. Exact integer scaling
 
@@ -148,9 +158,9 @@ $[x_i,\, x_i + w'_i] \times [y_i,\, y_i + h'_i]$, and containment is
 simply the requirement that this rectangle be a subset of
 $[0, W] \times [0, H]$.
 
-These are four independent linear inequalities per part, so
-containment on its own is easy: it defines a convex region of
-feasible positions. All the difficulty of the problem comes from the
+These are four independent linear inequalities per part, all of which
+must hold. Containment on its own is therefore easy to check: no
+choice is involved. All the difficulty of the problem comes from the
 next condition.
 
 ### 3.2 Non-overlap
@@ -187,3 +197,59 @@ choice appears: which of the four to satisfy. The choice cannot be
 resolved locally — whether it was the right one depends on where
 every other part ends up, and is only known once all parts are
 placed. Section 5 takes up the consequences.
+
+## 4. Normalization
+
+A part may be placed at any integer coordinate that satisfies the
+constraints of section 3, so the number of candidate positions is far
+too large to enumerate. Normalization reduces it to a short list
+without discarding any solution.
+
+### 4.1 The argument
+
+Take any valid layout. Push every part downwards until it meets
+another part or the board edge, then leftwards until it meets another
+part or the board edge. Neither move can create an overlap, since
+each part stops immediately before contact, and neither can push a
+part outside the board, since both move inwards only.
+
+The result is a valid layout using the same parts on the same board,
+in which every part is **supported**: its left edge lies at $0$ or
+flush against the right edge of another part, and its bottom edge
+lies at $0$ or flush against the top edge of another part.
+
+Hence, if any valid layout exists, a supported one exists. Searching
+only over supported layouts is therefore complete: it can fail to
+find a solution only when none exists.
+
+### 4.2 Candidate positions
+
+Let $S$ be the set of parts already placed. The candidate coordinates
+for the next part are
+
+$$X(S) = \{0\} \cup \{\, x_p + w'_p \;:\; p \in S \,\}$$
+$$Y(S) = \{0\} \cup \{\, y_p + h'_p \;:\; p \in S \,\}$$
+
+and the positions to try are the pairs in $X(S) \times Y(S)$, each in
+both orientations.
+
+The set grows as the search proceeds: with an empty board
+$X = Y = \{0\}$, so the first part has exactly one candidate position
+per orientation. Each placement contributes at most one new
+coordinate to each axis, so after $k$ placements there are at most
+$(k+1)^2$ candidate positions rather than the $W \cdot H$ of the full
+grid.
+
+Not every candidate is feasible — most will fail containment or
+overlap — but the set is guaranteed to contain a valid position
+whenever one exists.
+
+## Implementation map
+
+| Section | Module | Function |
+|---------|--------|----------|
+| 1 Problem instance | `cutstock/pieces.py` | `P`, `B` |
+| 2 Exact integer scaling | `cutstock/pieces.py` | `scale` |
+| 3.1 Containment | `cutstock/geometry.py` | `fits_in_board` |
+| 3.2 Non-overlap | `cutstock/geometry.py` | `overlaps` |
+| 4 Normalization | `cutstock/search.py` | `candidates` |
