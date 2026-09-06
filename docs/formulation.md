@@ -109,3 +109,46 @@ Note that for this particular instance every denominator is already a
 power of two, so `float` would happen to be exact. The scaling is not
 a fix for these numbers but a guarantee that correctness does not
 depend on which numbers are supplied.
+
+## 3. Geometry
+
+A layout assigns to each part $i$ a position and an orientation. The
+position is the coordinate of its lower-left corner,
+
+$$(x_i, y_i) \in \mathbb{Z}^2$$
+
+and the orientation is a binary variable
+
+$$r_i \in \{0, 1\}$$
+
+where $r_i = 1$ means the part is rotated by $90°$. Only these two
+orientations matter: a rectangle rotated by $180°$ occupies exactly
+the same region, so the four possible right-angle rotations collapse
+into two distinct footprints.
+
+The **effective dimensions** of part $i$ are therefore
+
+$$w'_i = (1 - r_i)\, w_i + r_i\, h_i, \qquad
+  h'_i = (1 - r_i)\, h_i + r_i\, w_i$$
+
+This is a linear way of writing a swap. For $r_i = 0$ it gives
+$(w'_i, h'_i) = (w_i, h_i)$; for $r_i = 1$ it gives $(h_i, w_i)$.
+Writing it linearly rather than as a conditional matters because
+these expressions must appear inside linear constraints later on.
+
+### 3.1 Containment
+
+Part $i$ lies inside the board iff
+
+$$0 \le x_i, \qquad x_i + w'_i \le W$$
+$$0 \le y_i, \qquad y_i + h'_i \le H$$
+
+Since $(x_i, y_i)$ is the lower-left corner, the part occupies
+$[x_i,\, x_i + w'_i] \times [y_i,\, y_i + h'_i]$, and containment is
+simply the requirement that this rectangle be a subset of
+$[0, W] \times [0, H]$.
+
+These are four independent linear inequalities per part, so
+containment on its own is easy: it defines a convex region of
+feasible positions. All the difficulty of the problem comes from the
+next condition.
