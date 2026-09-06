@@ -152,3 +152,38 @@ These are four independent linear inequalities per part, so
 containment on its own is easy: it defines a convex region of
 feasible positions. All the difficulty of the problem comes from the
 next condition.
+
+### 3.2 Non-overlap
+
+No two parts may share area. Both are rectangles with sides parallel
+to the axes, and for such rectangles there is a simple criterion:
+they are disjoint exactly when a straight line can be drawn between
+them, either vertical or horizontal.
+
+A vertical line exists when one part ends, horizontally, before the
+other begins. A horizontal line exists when one ends vertically
+before the other begins. That gives four cases, one per side, and at
+least one of them must hold:
+
+$$x_i + w'_i \le x_j \quad \lor \quad x_j + w'_j \le x_i
+  \quad \lor \quad y_i + h'_i \le y_j \quad \lor \quad y_j + h'_j \le y_i$$
+
+for every pair $i < j$ placed on the same board. The symbol $\lor$ is
+inclusive disjunction: at least one must hold, and more than one may.
+
+Each of the four is a single linear inequality, and each describes
+infinitely many layouts rather than one. The first, for instance,
+constrains only the horizontal axis — part $i$ must end before part
+$j$ starts — and says nothing about height, so every vertical
+placement remains available. A part sitting above and to the left of
+another satisfies two of the four at once, which is permitted.
+
+The inequalities are non-strict, so parts sharing an edge count as
+disjoint: they touch along a line, which has zero area.
+
+Compare this with containment, where four inequalities were joined by
+**and** and all had to hold. Here they are joined by **or**, and a
+choice appears: which of the four to satisfy. The choice cannot be
+resolved locally — whether it was the right one depends on where
+every other part ends up, and is only known once all parts are
+placed. Section 5 takes up the consequences.
